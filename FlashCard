@@ -1,0 +1,305 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
+
+class Flashcard {
+    private String question;
+    private String answer;
+
+    public Flashcard(String question, String answer) {
+        this.question = question;
+        this.answer = answer;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public String getAnswer() {
+        return answer;
+    }
+
+    @Override
+    public String toString() {
+        return "Question: " + question + ", Answer: " + answer;
+    }
+}
+
+class Deck {
+    private String name;
+    private List<Flashcard> flashcards;
+
+    public Deck(String name) {
+        this.name = name;
+        this.flashcards = new ArrayList<>();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<Flashcard> getFlashcards() {
+        return flashcards;
+    }
+
+    public void addFlashcard(Flashcard flashcard) {
+        flashcards.add(flashcard);
+    }
+
+    public void removeFlashcard(int index) {
+        if (index >= 0 && index < flashcards.size()) {
+            flashcards.remove(index);
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Flashcard flashcard : flashcards) {
+            sb.append(flashcard.toString()).append("\n");
+        }
+        return sb.toString();
+    }
+}
+
+class FlashcardSystem {
+    private List<Deck> myFlashcards;
+    private List<String> sharedFlashcards;
+
+    private JFrame mainFrame;
+    private JFrame flashcardFrame;
+    private JPanel flashcardPanel;
+    private JTextField deckNameField;
+    private JTextArea flashcardArea;
+
+    public FlashcardSystem() {
+        myFlashcards = new ArrayList<>();
+        sharedFlashcards = new ArrayList<>();
+        createMainPage();
+    }
+
+    private boolean showLoginForm() {
+        String username = JOptionPane.showInputDialog(mainFrame, "Username:");
+        JPasswordField passwordField = new JPasswordField();
+        Object[] inputFields = {"Password:", passwordField};
+        int option = JOptionPane.showOptionDialog(mainFrame, inputFields, "Login", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
+        if (option == JOptionPane.OK_OPTION) {
+            char[] password = passwordField.getPassword();
+            // Add your logic to validate the username and password
+            // For simplicity, let's assume valid credentials are:
+            return (username.equals("admin") && new String(password).equals("admin") ||
+                    username.equals("bryanorellana") && new String(password).equals("password1")
+                    || username.equals("katelynhoule") && new String(password).equals("password2")
+                    || username.equals("joeygamez") && new String(password).equals("password3")
+			  || username.equals("patricktinkam") && new String(password).equals("password4")
+			  || username.equals("shanelabel") && new String(password).equals("password5")
+                    || username.equals("tanoriathomas") && new String(password).equals("password6"));
+        }
+        return false;
+    }
+
+    private void createMainPage() {
+        mainFrame = new JFrame("Flash Card System");
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        boolean loginSuccess = showLoginForm();
+        if (!loginSuccess) {
+//            show error message and exit
+            JOptionPane.showMessageDialog(mainFrame, "Invalid username or password!");
+            System.exit(0);
+        }
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new GridLayout(2, 1));
+
+        JButton createDeckButton = new JButton("Create New Deck");
+        JButton viewFlashcardsButton = new JButton("View Flashcards");
+        JButton exitButton = new JButton("Exit");
+
+        createDeckButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mainFrame.setVisible(false);
+                showFlashcardPage();
+            }
+        });
+
+        viewFlashcardsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mainFrame.setVisible(false);
+                showSharedFlashcardsPage();
+            }
+        });
+
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
+        mainPanel.add(createDeckButton);
+        mainPanel.add(viewFlashcardsButton);
+        mainPanel.add(exitButton);
+
+        mainFrame.getContentPane().add(mainPanel);
+        mainFrame.pack();
+        mainFrame.setLocationRelativeTo(null);
+        mainFrame.setVisible(true);
+        mainFrame.setSize(400, 400);
+    }
+
+    private void showFlashcardPage() {
+        flashcardFrame = new JFrame("Flash Card System");
+        flashcardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        flashcardPanel = new JPanel();
+        flashcardPanel.setLayout(new GridLayout(4, 1));
+
+        JLabel deckNameLabel = new JLabel("Deck Name:");
+        deckNameField = new JTextField();
+
+        JButton addFlashcardButton = new JButton("Add Flashcard");
+        JButton deleteFlashcardButton = new JButton("Delete Flashcard");
+        JButton shareDeckButton = new JButton("Share Deck");
+        JButton backButton = new JButton("Back");
+
+        flashcardArea = new JTextArea();
+        flashcardArea.setEditable(false);
+
+        addFlashcardButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String question = JOptionPane.showInputDialog(flashcardFrame, "Enter the question:");
+                String answer = JOptionPane.showInputDialog(flashcardFrame, "Enter the answer:");
+                if (question != null && answer != null && !question.trim().isEmpty() && !answer.trim().isEmpty()) {
+                    Deck currentDeck = getCurrentDeck();
+                    if (currentDeck != null) {
+                        Flashcard flashcard = new Flashcard(question, answer);
+                        currentDeck.addFlashcard(flashcard);
+                        flashcardArea.setText(currentDeck.toString());
+                    }
+                }
+            }
+        });
+
+        deleteFlashcardButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Deck currentDeck = getCurrentDeck();
+                if (currentDeck != null) {
+                    String input = JOptionPane.showInputDialog(flashcardFrame, "Enter the index of the flashcard to delete:");
+                    try {
+                        int index = Integer.parseInt(input);
+                        currentDeck.removeFlashcard(index);
+                        flashcardArea.setText(currentDeck.toString());
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(flashcardFrame, "Invalid index!");
+                    }
+                }
+            }
+        });
+
+        shareDeckButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Deck currentDeck = getCurrentDeck();
+                if (currentDeck != null) {
+                    String deckName = currentDeck.getName();
+                    if (!sharedFlashcards.contains(deckName)) {
+                        sharedFlashcards.add(deckName);
+                        JOptionPane.showMessageDialog(flashcardFrame, "Deck shared successfully!");
+                    } else {
+                        JOptionPane.showMessageDialog(flashcardFrame, "Deck already shared!");
+                    }
+                }
+            }
+        });
+
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                flashcardFrame.setVisible(false);
+                mainFrame.setVisible(true);
+            }
+        });
+
+        flashcardPanel.add(deckNameLabel);
+        flashcardPanel.add(deckNameField);
+        flashcardPanel.add(addFlashcardButton);
+        flashcardPanel.add(deleteFlashcardButton);
+        flashcardPanel.add(shareDeckButton);
+        flashcardPanel.add(backButton);
+
+        flashcardFrame.getContentPane().add(flashcardPanel, BorderLayout.NORTH);
+        flashcardFrame.getContentPane().add(new JScrollPane(flashcardArea), BorderLayout.CENTER);
+        flashcardFrame.pack();
+        flashcardFrame.setLocationRelativeTo(null);
+        flashcardFrame.setSize(400, 400);
+        flashcardFrame.setVisible(true);
+    }
+
+    private void showSharedFlashcardsPage() {
+        JFrame sharedFlashcardsFrame = new JFrame("Shared Flashcards");
+        sharedFlashcardsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JPanel sharedFlashcardsPanel = new JPanel();
+        sharedFlashcardsPanel.setLayout(new GridLayout(sharedFlashcards.size(), 1));
+
+        for (String deckName : sharedFlashcards) {
+            JButton deckButton = new JButton(deckName);
+            deckButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    JOptionPane.showMessageDialog(sharedFlashcardsFrame, "You selected the deck: " + deckName);
+                }
+            });
+            sharedFlashcardsPanel.add(deckButton);
+        }
+
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sharedFlashcardsFrame.setVisible(false);
+                mainFrame.setVisible(true);
+            }
+        });
+        sharedFlashcardsPanel.add(backButton);
+
+        sharedFlashcardsFrame.getContentPane().add(sharedFlashcardsPanel);
+        sharedFlashcardsFrame.pack();
+        sharedFlashcardsFrame.setLocationRelativeTo(null);
+        sharedFlashcardsFrame.setSize(400, 400);
+        sharedFlashcardsFrame.setVisible(true);
+    }
+
+    private Deck getCurrentDeck() {
+        String deckName = deckNameField.getText();
+        if (!deckName.trim().isEmpty()) {
+            for (Deck deck : myFlashcards) {
+                if (deck.getName().equalsIgnoreCase(deckName)) {
+                    return deck;
+                }
+            }
+            Deck newDeck = new Deck(deckName);
+            myFlashcards.add(newDeck);
+            return newDeck;
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new FlashcardSystem();
+            }
+        });
+    }
+}
